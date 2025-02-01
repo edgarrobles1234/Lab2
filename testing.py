@@ -42,45 +42,84 @@ def selectSplittingAttribute(df,target, threshold):
     D = df.loc[:,df.columns != target]
     D0 = entropy(C)
     Gain = {}
+    TypeDict = {}
 
     for curr in D.columns:
        A=D[curr].unique()
-       length = len(D)
-       entAj = 0
-       for i in A:
-           Cj = C[D[curr] == i]
-           S=len(Cj)
-           entAj = entAj + S/length *entropy(Cj)
-       Gain.update({curr:D0-entAj})
+       type = ''
+       if len(A) > 5 and isinstance(A[0], (int, float)):
+           type = 'numeric'
+       else:
+           type = 'categorical'
+       TypeDict.update({curr:type})
+       if type == 'numeric':
+           (split,gain)=findBestSplit(D[curr], C)
+           Gain.update ({curr:gain})
+       else:  
+            length = len(D)
+            entAj = 0
+            for i in A:
+                Cj = C[D[curr] == i]
+                S=len(Cj)
+                entAj = entAj + S/length *entropy(Cj)
+            Gain.update({curr:D0-entAj})
     if max(Gain.values()) >  threshold:
-        return max(Gain, key=Gain.get)
+        best = max(Gain, key=Gain.get)
+        return (best, TypeDict[best])
     else:
-        return None
+        return (None, None)
     
 def buildTree(df, target, threshold):
-    best_split = selectSplittingAttribute(df,target,threshold)
+    print(df)
+    (best_split, type) = selectSplittingAttribute(df,target,threshold)
     if best_split == None:
-        print("No further splitting")
+        print(f"Prediction: {df[target].mode }")
     else:
-        edges = df[best_split].unique()
-
         splitD = list()
-        for i in edges:
-            splitD.append(df[df[best_split]==i].loc[:,df.columns != best_split])
-        
+        if type == "numeric":
+           (split,gain) = findBestSplit(df[best_split],df[target])
+           edges = [f"{split} <=", f"{split} >"]
+           splitD = [df[df[best_split]<=split].loc[:,df.columns != best_split], df[df[best_split]>split].loc[:,df.columns != best_split]]
+        else:
+            edges = df[best_split].unique()
+
+            for i in edges:
+                splitD.append(df[df[best_split]==i].loc[:,df.columns != best_split])
+            
         for data in splitD:
-            print(data)
             buildTree(data, target, threshold)
 
 
-def main():
-    df = pd.read_csv('balloon.csv')
-    target = 'Inflated'
-    threshold = 0.05
+def findBestSplit(A, C):
+    A= A.sort_values()
+    D0 = entropy(C)
+    maxgain = -1
+    length = len(A)
+    bestsplit =()
+    findBestSplit
+    for i in range(1, length):
+        S1 = C[A.iloc[:i].index]
+        S2 = C[A.iloc[i:].index]
+        curr_gain = D0-(len(S1)/length*entropy(S1) + len(S2)/length*entropy(S2))
+        if(curr_gain > maxgain):
+            maxgain  = curr_gain
+            bestsplit=(A.iloc[i],curr_gain)
+    return bestsplit
 
+
+
+
+def main():
+    df = pd.read_csv('iris.data.csv')
+    target = 'species'
+    threshold = 0.3
     buildTree(df, target, threshold)
 
        
 
 
 main()
+
+
+
+
