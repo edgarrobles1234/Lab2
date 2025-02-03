@@ -4,38 +4,15 @@ import math
 
 
 def entropy(C):
-
+    if len(C.unique()) <= 1:
+        return 0  # If only one unique value, entropy is 0
+    
     val = C.unique()
     entropy = 0
     for i in val:
-        Pr = C.value_counts()[i]/C.count()
-        entropy = (Pr * math.log(Pr))
-        return -entropy
-
-'''
-def entropy_Aj(D,C):
-
-    val = D.unique()
-
-    entropy = 0
-    for i in val:
-        Pr = C.value_counts()[i]/C.count()
-        entropy = (Pr * math.log(Pr))
-        return -entropy
-
-
-def Gain(D,A):
-    return entropy(D) - entropy_Aj(D,A)
-
-function selectSplittingAttribute(A,D,threshold);
-information gain p0 := enthropy(D); 
-for each Ai ∈ Ado p[Ai] := enthropyAi (D);
-   Gain[Ai] = p0−p[Ai]; 
-//compute info gain endfor 
-best := arg(findMax(Gain[])); 
-if Gain[best] >threshold then return best else return NULL;
-'''
-
+        Pr = C.value_counts()[i] / C.count()
+        entropy -= Pr * math.log(Pr, 2)  # Use log base 2 for entropy
+    return entropy
 
 def selectSplittingAttribute(df,target, threshold):
     C = df[target]
@@ -68,12 +45,14 @@ def selectSplittingAttribute(df,target, threshold):
         return (best, TypeDict[best])
     else:
         return (None, None)
+
+
+
     
 def buildTree(df, target, threshold):
-    print(df)
     (best_split, type) = selectSplittingAttribute(df,target,threshold)
     if best_split == None:
-        print(f"Prediction: {df[target].mode }")
+        print(f"Prediction: {df[target].mode()[0] }")
     else:
         splitD = list()
         if type == "numeric":
@@ -111,12 +90,12 @@ def findBestSplit(A, C):
 
 def main():
     df = pd.read_csv('iris.data.csv')
+    shuffled_df = df.sample(frac=1)
     target = 'species'
-    threshold = 0.3
-    buildTree(df, target, threshold)
+    threshold = 0.2
+    buildTree(shuffled_df, target, threshold)
 
        
-
 
 main()
 
